@@ -1,0 +1,35 @@
+# File: .github/workflows/.yml
+name: 自动同步工作流程
+on:
+  schedule:
+    - cron: '5 8,20 * * *' 
+  workflow_dispatch:
+  #watch:
+  #  types: started
+  repository_dispatch:
+    types: sync-scripts
+jobs:
+  repo-sync:
+    env:
+      PAT: ${{ secrets.PAT || github.event.client_payload.PAT }} #此处PAT需要申请，教程详见：https://www.jianshu.com/p/bb82b3ad1d11
+    runs-on: ubuntu-latest
+    if: github.event.repository.owner.id == github.event.sender.id
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: '运行 【自动同步工作流程】'
+        uses: repo-sync/github-sync@v2
+        if: env.PAT
+        with:
+          source_repo: "https://github.com/qier222/YesPlayMusic.git"
+          source_branch: "master" #按照被GIT的仓库分支名称修改
+          destination_branch: "master" #按照自己仓库分支名称修改
+          github_token: ${{ secrets.PAT || github.event.client_payload.PAT }}
+          
+          #######github_token获取教程######
+          #https://www.jianshu.com/p/bb82b3ad1d11
+          #点击 GitHub 用户设置页面 最下方的 Developer setting ，选择 Personal access tokens 来生成一个 token
+          #由于我们只需要能够对普通仓库 push 就行了，所以把 repo 部分勾上即可。
+          #新建Secrets    PAT，填入Token
